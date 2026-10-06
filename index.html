@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MelEcheniquePhoto | Galería</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #111;
+            color: #fff;
+        }
+
+        header {
+            text-align: center;
+            padding: 35px 20px 25px;
+            border-bottom: 1px solid #333;
+        }
+
+        header h1 {
+            font-size: 28px;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .evento {
+            text-align: center;
+            padding: 25px 15px;
+        }
+
+        .evento h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .evento p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .acciones {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 15px 25px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .btn-carrito {
+            background: white;
+            color: black;
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        .contador {
+            background: #222;
+            padding: 12px 18px;
+            border-radius: 8px;
+        }
+
+        .galeria {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .foto {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: #222;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .foto img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .foto:hover img {
+            transform: scale(1.04);
+        }
+
+        .numero {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .seleccionada {
+            outline: 4px solid white;
+        }
+
+        .seleccionada::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            color: black;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* VISOR */
+
+        .visor {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .visor.activo {
+            display: flex;
+        }
+
+        .visor img {
+            max-width: 90%;
+            max-height: 85vh;
+            object-fit: contain;
+        }
+
+        .cerrar {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: white;
+            font-size: 35px;
+            background: none;
+        }
+
+        .anterior,
+        .siguiente {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.15);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 25px;
+        }
+
+        .anterior {
+            left: 20px;
+        }
+
+        .siguiente {
+            right: 20px;
+        }
+
+        .visor-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 18px;
+            border-radius: 8px;
+        }
+
+        /* CARRITO */
+
+        .carrito {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: flex-end;
+        }
+
+        .carrito.activo {
+            display: flex;
+        }
+
+        .carrito-contenido {
+            width: 100%;
+            max-width: 430px;
+            height: 100%;
+            background: #181818;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .carrito-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .cerrar-carrito {
+            background: none;
+            color: white;
+            font-size: 28px;
+        }
+
+        .item-carrito {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .item-carrito img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .eliminar {
+            background: #333;
+            color: white;
+            padding: 7px;
+            border-radius: 5px;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 25px 0;
+        }
+
+        .formulario input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: white;
+        }
+
+        .comprar {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            color: black;
+            border-radius: 7px;
+            margin-top: 5px;
+        }
+
+        .vacio {
+            color: #999;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        /* CELULAR */
+
+        @media (max-width: 900px) {
+            .galeria {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 22px;
+            }
+
+            .galeria {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+                padding: 5px;
+            }
+
+            .foto {
+                border-radius: 3px;
+            }
+
+            .numero {
+                font-size: 10px;
+                padding: 4px 6px;
+            }
+
+            .anterior {
+                left: 8px;
+            }
+
+            .siguiente {
+                right: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>MelEcheniquePhoto</h1>
+    <p>Fotografía deportiva y de eventos</p>
+</header>
+
+<section class="evento">
+    <h2>Rally - Alta Gracia</h2>
+    <p>Seleccioná las fotos que quieras comprar.</p>
+</section>
+
+<div class="acciones">
+    <button class="btn-carrito" onclick="abrirCarrito()">
+        🛒 Ver carrito
+    </button>
+
+    <div class="contador">
+        <span id="contador">0</span> fotos seleccionadas
+    </div>
+</div>
+
+<main class="galeria" id="galeria"></main>
+
+<!-- VISOR DE FOTO -->
+
+<div class="visor" id="visor">
+
+    <button class="cerrar" onclick="cerrarVisor()">×</button>
+
+    <button class="anterior" onclick="fotoAnterior()">‹</button>
+
+    <img id="imagenGrande" src="" alt="Fotografía">
+
+    <button class="siguiente" onclick="fotoSiguiente()">›</button>
+
+    <div class="visor-info">
+        Foto #<span id="numeroVisor"></span>
+    </div>
+
+</div>
+
+<!-- CARRITO -->
+
+<div class="carrito" id="carrito">
+
+    <div class="carrito-contenido">
+
+        <div class="carrito-header">
+            <h2>Tu selección</h2>
+
+            <button class="cerrar-carrito" onclick="cerrarCarrito()">
+                ×
+            </button>
+        </div>
+
+        <div id="listaCarrito"></div>
+
+        <div class="total">
+            Total: $<span id="total">0</span>
+        </div>
+
+        <div class="formulario">
+
+            <input
+                type="text"
+                id="nombre"
+                placeholder="Tu nombre"
+            >
+
+            <input
+                type="text"
+                id="contacto"
+                placeholder="Tu WhatsApp o email"
+            >
+
+            <button class="comprar" onclick="realizarPedido()">
+                📲 Realizar pedido
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    © 2026 MelEcheniquePhoto
+</footer>
+
+<script>
+
+    /*
+        CONFIGURACIÓN
+    */
+
+    const PRECIO_FOTO = 3000;
+
+    /*
+        CAMBIÁ ESTE NÚMERO POR TU WHATSAPP.
+
+        IMPORTANTE:
+        Ponelo con código de país y sin + ni espacios.
+
+        Argentina:
+        549 + código de área + número
+
+        Ejemplo:
+        5493511234567
+    */
+
+    const WHATSAPP = "5493511234567";
+
+
+    /*
+        LISTA DE FOTOS
+
+        Si tenés foto001.jpg, foto002.jpg,
+        foto003.jpg, etc., agregalas acá.
+
+        Para 100 fotos tendrías que agregar
+        del 1 al 100.
+
+        Más adelante podemos automatizar esto.
+    */
+
+    const fotos = [
+        "foto001.jpg",
+        "foto002.jpg",
+        "foto003.jpg",
+        "foto004.jpg",
+        "foto005.jpg",
+        "foto006.jpg",
+        "foto007.jpg",
+        "foto008.jpg",
+        "foto009.jpg",
+        "foto010.jpg"
+    ];
+
+
+    let seleccionadas = [];
+
+    let fotoActual = 0;
+
+
+    /*
+        CREAR GALERÍA
+    */
+
+    function crearGaleria() {
+
+        const galeria = document.getElementById("galeria");
+
+        galeria.innerHTML = "";
+
+        fotos.forEach((nombre, indice) => {
+
+            const numero = indice + 1;
+
+            const div = document.createElement("div");
+
+            div.className = "foto";
+
+            div.id = "foto-" + numero;
+
+            div.onclick = () => abrirVisor(indice);
+
+            div.innerHTML = `
+                <img
+                    src="fotos/${nombre}"
+                    alt="Foto ${numero}"
+                    loading="lazy"
+                >
+
+                <div class="numero">
+                    #${String(numero).padStart(3, "0")}
+                </div>
+            `;
+
+            galeria.appendChild(div);
+
+        });
+
+    }
+
+
+    /*
+        VISOR
+    */
+
+    function abrirVisor(indice) {
+
+        fotoActual = indice;
+
+        actualizarVisor();
+
+        document.getElementById("visor")
+            .classList.add("activo");
+    }
+
+
+    function cerrarVisor() {
+
+        document.getElementById("visor")
+            .classList.remove("activo");
+
+    }
+
+
+    function actualizarVisor() {
+
+        const imagen = document.getElementById("imagenGrande");
+
+        imagen.src = "fotos/" + fotos[fotoActual];
+
+        document.getElementById("numeroVisor")
+            .textContent = String(fotoActual + 1).padStart(3, "0");
+
+    }
+
+
+    function fotoAnterior() {
+
+        fotoActual--;
+
+        if (fotoActual < 0) {
+            fotoActual = fotos.length - 1;
+        }
+
+        actualizarVisor();
+
+    }
+
+
+    function fotoSiguiente() {
+
+        fotoActual++;
+
+        if (fotoActual >= fotos.length) {
+            fotoActual = 0;
+        }
+
+        actualizarVisor();
+
+    }
+
+
+    /*
+        SELECCIÓN
+
+        Al hacer doble clic sobre una foto
+        se agrega al carrito.
+    */
+
+    document.addEventListener("dblclick", function(event) {
+
+        const tarjeta = event.target.closest(".foto");
+
+        if (!tarjeta) return;
+
+        const numero = parseInt(
+            tarjeta.id.replace("foto-", "")
+        );
+
+        agregarAlCarrito(numero);
+
+    });
+
+
+    function agregarAlCarrito(numero) {
+
+        if (!seleccionadas.includes(numero)) {
+
+            seleccionadas.push(numero);
+
+            actualizarSeleccion();
+
+        }
+
+    }
+
+
+    function eliminarDelCarrito(numero) {
+
+        seleccionadas = seleccionadas.filter(
+            n => n !== numero
+        );
+
+        actualizarSeleccion();
+
+        actualizarCarrito();
+
+    }
+
+
+    function actualizarSeleccion() {
+
+        document.getElementById("contador")
+            .textContent = seleccionadas.length;
+
+        fotos.forEach((_, indice) => {
+
+            const numero = indice + 1;
+
+            const tarjeta =
+                document.getElementById("foto-" + numero);
+
+            if (!tarjeta) return;
+
+            if (seleccionadas.includes(numero)) {
+
+                tarjeta.classList.add("seleccionada");
+
+            } else {
+
+                tarjeta.classList.remove("seleccionada");
+
+            }
+
+        });
+
+    }
+
+
+    /*
+        CARRITO
+    */
+
+    function abrirCarrito() {
+
+        actualizarCarrito();
+
+        document.getElementById("carrito")
+            .classList.add("activo");
+
+    }
+
+
+    function cerrarCarrito() {
+
+        document.getElementById("carrito")
+            .classList.remove("activo");
+
+    }
+
+
+    function actualizarCarrito() {
+
+        const lista =
+            document.getElementById("listaCarrito");
+
+        const total =
+            document.getElementById("total");
+
+        if (seleccionadas.length === 0) {
+
+            lista.innerHTML =
+                '<div class="vacio">No seleccionaste ninguna foto.</div>';
+
+            total.textContent = "0";
+
+            return;
+
+        }
+
+
+        lista.innerHTML = "";
+
+        let suma = 0;
+
+
+        seleccionadas.forEach(numero => {
+
+            const nombreFoto = fotos[numero - 1];
+
+            suma += PRECIO_FOTO;
+
+            const item =
+                document.createElement("div");
+
+            item.className = "item-carrito";
+
+            item.innerHTML = `
+
+                <img
+                    src="fotos/${nombreFoto}"
+                    alt="Foto ${numero}"
+                >
+
+                <div class="item-info">
+
+                    <strong>
+                        Foto #${String(numero).padStart(3, "0")}
+                    </strong>
+
+                    <span>
+                        $${PRECIO_FOTO.toLocaleString("es-AR")}
+                    </span>
+
+                </div>
+
+                <button
+                    class="eliminar"
+                    onclick="eliminarDelCarrito(${numero})"
+                >
+                    ×
+                </button>
+
+            `;
+
+            lista.appendChild(item);
+
+        });
+
+
+        total.textContent =
+            suma.toLocaleString("es-AR");
+
+    }
+
+
+    /*
+        PEDIDO POR WHATSAPP
+    */
+
+    function realizarPedido() {
+
+        if (seleccionadas.length === 0) {
+
+            alert("Primero seleccioná alguna foto.");
+
+            return;
+
+        }
+
+
+        const nombre =
+            document.getElementById("nombre").value.trim();
+
+        const contacto =
+            document.getElementById("contacto").value.trim();
+
+
+        if (!nombre || !contacto) {
+
+            alert(
+                "Completá tu nombre y tu WhatsApp o email."
+            );
+
+            return;
+
+        }
+
+
+        const numeros =
+            seleccionadas
+                .map(n =>
+                    "#" + String(n).padStart(3, "0")
+                )
+                .join(", ");
+
+
+        const total =
+            seleccionadas.length * PRECIO_FOTO;
+
+
+        const mensaje =
+
+`Hola! Quiero comprar fotografías de MelEcheniquePhoto.
+
+Nombre: ${nombre}
+
+Contacto: ${contacto}
+
+Fotos seleccionadas:
+${numeros}
+
+Cantidad: ${seleccionadas.length}
+
+Total: $${total.toLocaleString("es-AR")}
+
+Quedo a la espera de los datos para realizar el pago.`;
+
+
+        const url =
+            "https://wa.me/" +
+            WHATSAPP +
+            "?text=" +
+            encodeURIComponent(mensaje);
+
+
+        window.open(url, "_blank");
+
+    }
+
+
+    /*
+        TECLADO
+    */
+
+    document.addEventListener("keydown", function(event) {
+
+        if (
+            !document
+                .getElementById("visor")
+                .classList.contains("activo")
+        ) {
+            return;
+        }
+
+
+        if (event.key === "Escape") {
+            cerrarVisor();
+        }
+
+        if (event.key === "ArrowLeft") {
+            fotoAnterior();
+        }
+
+        if (event.key === "ArrowRight") {
+            fotoSiguiente();
+        }
+
+    });
+
+
+    /*
+        INICIAR
+    */
+
+    crearGaleria();
+
+</script>
+
+</body>
+</html>
